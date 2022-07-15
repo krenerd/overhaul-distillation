@@ -13,7 +13,7 @@ def distillation_loss(source, target, margin):
     return loss.sum()
 
 def build_feature_connector(t_channel, s_channel, connector_depth=1, connector_bn=True, connector_bias=False, connector_kernel_size=1):
-    C = [nn.Conv2d(s_channel, t_channel, kernel_size=connector_kernel_size, stride=1, padding="same", bias=Faconnector_biaslse)]
+    C = [nn.Conv2d(s_channel, t_channel, kernel_size=connector_kernel_size, stride=1, padding="same", bias=connector_bias)]
     if connector_bn:
         C += [nn.BatchNorm2d(t_channel)]
 

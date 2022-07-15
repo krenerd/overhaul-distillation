@@ -25,6 +25,12 @@ parser.add_argument('--batch_size', default=128, type=int, help='mini-batch size
 parser.add_argument('--lr', default=0.1, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='weight decay')
+
+parser.add_argument('--connector_depth', default=1, type=int)
+parser.add_argument('--connector_bn', action="store_false", default=True)
+parser.add_argument('--connector_bias', action="store_true", default=False)
+parser.add_argument('--connector_kernel_size', default=1, type=int)
+
 args = parser.parse_args()
 
 gpu_num = 0
@@ -53,7 +59,14 @@ testloader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, sh
 t_net, s_net, args = load_settings.load_paper_settings(args)
 
 # Module for distillation
-d_net = distiller.Distiller(t_net, s_net)
+d_net = distiller.Distiller(
+    t_net,
+    s_net,
+    connector_depth=args.connector_depth,
+    connector_bn=args.connector_bn,
+    connector_bias=args.connector_bias,
+    connector_kernel_size=args.connector_kernel_size
+)
 
 print('the number of teacher model parameters: {}'.format(sum([p.data.nelement() for p in t_net.parameters()])))
 print('the number of student model parameters: {}'.format(sum([p.data.nelement() for p in s_net.parameters()])))

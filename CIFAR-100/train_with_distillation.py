@@ -11,12 +11,14 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.nn.functional as F
 import argparse
+import wandb
 
 import distiller
 import load_settings
 
 parser = argparse.ArgumentParser(description='CIFAR-100 training')
 parser.add_argument('--data_path', type=str, default='../data')
+parser.add_argument('--name', type=str)
 parser.add_argument('--paper_setting', default='a', type=str)
 parser.add_argument('--epochs', default=200, type=int, help='number of total epochs to run')
 parser.add_argument('--batch_size', default=128, type=int, help='mini-batch size (default: 256)')
@@ -65,6 +67,16 @@ if use_cuda:
 
 criterion_CE = nn.CrossEntropyLoss()
 
+print("wandb init")
+def get_timestamp():
+    return datetime.now().strftime("%b%d_%H-%M-%S")
+wandb.init(
+    # Set the project where this run will be logged
+    project="knowledge-distillation-overhaul", 
+    # We pass a run name (otherwise it’ll be randomly assigned, like sunshine-lollypop-10)
+    name=f"experiment_{args.name}-{get_timestamp()}", 
+    # Track hyperparameters and run metadata
+)
 # Training
 def train_with_distill(d_net, epoch):
     epoch_start_time = time.time()
@@ -130,7 +142,9 @@ def test(net):
 
 
 print('Performance of teacher network')
-test(t_net)
+avg_loss, teacher_acc = test(t_net)
+
+wandb.log({"teacher_acc": teacher_acc, "teacher_avg_loss": avg_loss})
 
 for epoch in range(args.epochs):
     if epoch is 0:
@@ -145,3 +159,6 @@ for epoch in range(args.epochs):
 
     train_loss = train_with_distill(d_net, epoch)
     test_loss, accuracy = test(s_net)
+    wandb.log({"epoch/val_acc": accuracy, "epoch/val_loss": test_loss, "epoch/trn_loss": train_loss, "epoch": epoch})
+
+wandb.finish()

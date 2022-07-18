@@ -26,6 +26,7 @@ parser.add_argument('--batch_size', default=128, type=int, help='mini-batch size
 parser.add_argument('--lr', default=0.1, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='weight decay')
+parser.add_argument('--alpha', default=1, type=int)
 
 parser.add_argument('--connector_depth', default=1, type=int)
 parser.add_argument('--connector_bn', action="store_false", default=True)
@@ -92,7 +93,7 @@ wandb.init(
     # Track hyperparameters and run metadata
 )
 # Training
-def train_with_distill(d_net, epoch):
+def train_with_distill(d_net, epoch, alpha):
     epoch_start_time = time.time()
     print('\nDistillation epoch: %d' % epoch)
 
@@ -114,7 +115,7 @@ def train_with_distill(d_net, epoch):
         outputs, loss_distill = d_net(inputs)
         loss_CE = criterion_CE(outputs, targets)
 
-        loss = loss_CE + loss_distill.sum() / batch_size / 1000
+        loss = loss_CE + alpha * (loss_distill.sum()) / batch_size / 1000
 
         loss.backward()
         optimizer.step()
@@ -171,7 +172,7 @@ for epoch in range(args.epochs):
         optimizer = optim.SGD([{'params': s_net.parameters()}, {'params': d_net.Connectors.parameters()}],
                               lr=args.lr / 100, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 
-    train_loss = train_with_distill(d_net, epoch)
+    train_loss = train_with_distill(d_net, epoch, args.alpha)
     test_loss, accuracy = test(s_net)
     wandb.log({"epoch/val_acc": accuracy, "epoch/val_loss": test_loss, "epoch/trn_loss": train_loss, "epoch": epoch})
 

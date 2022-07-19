@@ -101,7 +101,9 @@ def train_with_distill(d_net, epoch, alpha):
     d_net.s_net.train()
     d_net.t_net.train()
 
-    train_loss = 0
+    total_loss = 0
+    KD_loss = 0
+    CE_loss = 0
     correct = 0
     total = 0
 
@@ -116,11 +118,14 @@ def train_with_distill(d_net, epoch, alpha):
         loss_CE = criterion_CE(outputs, targets)
 
         loss = loss_CE + alpha * (loss_distill.sum()) / batch_size / 1000
+        loss_distill = loss_distill.sum() / batch_size / 1000
 
         loss.backward()
         optimizer.step()
 
-        train_loss += loss_CE.item()
+        total_loss += loss.item()
+        CE_loss += loss_CE.item()
+        KD_loss += loss_distill.item()
 
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
@@ -129,9 +134,10 @@ def train_with_distill(d_net, epoch, alpha):
         b_idx = batch_idx
 
     print('Train \t Time Taken: %.2f sec' % (time.time() - epoch_start_time))
-    print('Loss: %.3f | Acc: %.3f%% (%d/%d)' % (train_loss / (b_idx + 1), 100. * correct / total, correct, total))
+    print('total_loss: %.3f | KD Loss: %.3f | CE_Loss: %.3f | Acc: %.3f%% (%d/%d)' % (total_loss / (b_idx + 1), KD_loss / (b_idx + 1), CE_loss / (b_idx + 1), 100. * correct / total, correct, total))
 
-    return train_loss / (b_idx + 1)
+
+    return total_loss / (b_idx + 1), CE_loss / (b_idx + 1), KD_loss / (b_idx + 1)
 
 def test(net):
     epoch_start_time = time.time()
@@ -172,8 +178,8 @@ for epoch in range(args.epochs):
         optimizer = optim.SGD([{'params': s_net.parameters()}, {'params': d_net.Connectors.parameters()}],
                               lr=args.lr / 100, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 
-    train_loss = train_with_distill(d_net, epoch, args.alpha)
+    total_loss, CE_loss, KD_loss = train_with_distill(d_net, epoch, args.alpha)
     test_loss, accuracy = test(s_net)
-    wandb.log({"epoch/val_acc": accuracy, "epoch/val_loss": test_loss, "epoch/trn_loss": train_loss, "epoch": epoch})
+    wandb.log({"epoch/val_acc": accuracy, "epoch/val_loss": test_loss, "epoch/total_loss": total_loss, "epoch/CE_loss": CE_loss, "epoch/KD_loss": KD_loss, "epoch": epoch})
 
 wandb.finish()

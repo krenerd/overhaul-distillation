@@ -116,9 +116,9 @@ def train_with_distill(d_net, epoch, alpha):
         batch_size = inputs.shape[0]
         outputs, loss_distill = d_net(inputs)
         loss_CE = criterion_CE(outputs, targets)
+        loss_distill = loss_distill.sum() / batch_size
 
-        loss = loss_CE + alpha * (loss_distill.sum()) / batch_size / 1000
-        loss_distill = loss_distill.sum() / batch_size / 1000
+        loss = loss_CE + alpha * loss_distill
 
         loss.backward()
         optimizer.step()

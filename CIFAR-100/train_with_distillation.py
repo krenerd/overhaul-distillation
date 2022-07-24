@@ -26,7 +26,7 @@ parser.add_argument('--batch_size', default=128, type=int, help='mini-batch size
 parser.add_argument('--lr', default=0.1, type=float, help='initial learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, help='momentum')
 parser.add_argument('--weight_decay', default=5e-4, type=float, help='weight decay')
-parser.add_argument('--alpha', default=1, type=int)
+parser.add_argument('--alpha', default=0.001, type=float)
 
 parser.add_argument('--connector_depth', default=1, type=int)
 parser.add_argument('--connector_bn', action="store_false", default=True)

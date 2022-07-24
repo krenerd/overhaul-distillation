@@ -16,6 +16,12 @@ def load_paper_settings(args):
         state = torch.load(WRN_path, map_location={'cuda:0': 'cpu'})['model']
         teacher.load_state_dict(state)
         student = WRN.WideResNet(depth=16, widen_factor=4, num_classes=100)
+        
+    elif args.paper_setting == 'a_self':
+        teacher = WRN.WideResNet(depth=28, widen_factor=4, num_classes=100)
+        state = torch.load(WRN_path, map_location={'cuda:0': 'cpu'})['model']
+        teacher.load_state_dict(state)
+        student = WRN.WideResNet(depth=28, widen_factor=4, num_classes=100)
 
     elif args.paper_setting == 'b':
         teacher = WRN.WideResNet(depth=28, widen_factor=4, num_classes=100)
